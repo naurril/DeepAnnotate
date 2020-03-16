@@ -1,6 +1,5 @@
 import argparse
 import math
-import h5py
 import numpy as np
 import tensorflow as tf
 import importlib
@@ -38,10 +37,10 @@ LOG_DIR = FLAGS.log_dir
 
 if not os.path.exists(LOG_DIR): 
     os.mkdir(LOG_DIR)
-
+    os.mkdir(LOG_DIR+"/src")
 
 # save_src_files
-os.system('cp *.py %s' % (LOG_DIR)) # bkp of train procedure
+os.system('cp *.py %s/src' % (LOG_DIR)) # bkp of train procedure
 LOG_FOUT = open(os.path.join(LOG_DIR, 'log_train.txt'), 'w')
 LOG_FOUT.write(str(FLAGS)+'\n')
 
