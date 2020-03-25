@@ -177,8 +177,10 @@ def train():
 
 def test_data():
     data = data_provider.loadTrainData()
-    idx = np.random.randint(data.shape[0])
-    
+    #idx = np.random.randint(data.shape[0])
+    num = 10
+    if num > data.shape[0]:
+        num = data.shape[0]
     for i in range(10):        
         obj = data[i]
 

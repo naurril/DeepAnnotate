@@ -112,11 +112,12 @@ def sample_one_input_data(obj, num_points, rotate=True, translate=True, crop=Tru
         }
 
 
+
 def save_to_show(name, points, anno):    
     padding = np.zeros([points.shape[0], 1], dtype=np.float32)   # pad to N*4
     points = np.concatenate([points, padding], axis=-1)
-    points.tofile("/home/lie/src/SUSTechPoints/data/kitti_eval/pcd/"+name+".bin")
+    points.tofile("/home/lie/fast/code/SUSTechPoints/data/kitti_eval/pcd/"+name+".bin")
     #print(points.dtype)
     
-    with open("/home/lie/src/SUSTechPoints/data/kitti_eval/label/"+name+".json", 'w') as outfile:
+    with open("/home/lie/fast/code/SUSTechPoints/data/kitti_eval/label/"+name+".json", 'w') as outfile:
                 json.dump(anno, outfile)
