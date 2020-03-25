@@ -5,7 +5,10 @@ Date: November 2016
 """
 
 import numpy as np
-import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 
 def _variable_on_cpu(name, shape, initializer, use_fp16=False):
   """Helper to create a Variable stored on CPU memory.
@@ -21,7 +24,7 @@ def _variable_on_cpu(name, shape, initializer, use_fp16=False):
     var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)
   return var
 
-def _variable_with_weight_decay(name, shape, stddev, wd, use_xavier=True):
+def _variable_with_weight_decay(name, shape, stddev, wd, use_xavier=False):
   """Helper to create an initialized Variable with weight decay.
 
   Note that the Variable is initialized with a truncated normal distribution.
@@ -55,7 +58,7 @@ def conv1d(inputs,
            scope,
            stride=1,
            padding='SAME',
-           use_xavier=True,
+           use_xavier=False,
            stddev=1e-3,
            weight_decay=0.0,
            activation_fn=tf.nn.relu,
@@ -115,7 +118,7 @@ def conv2d(inputs,
            scope,
            stride=[1, 1],
            padding='SAME',
-           use_xavier=True,
+           use_xavier=False,
            stddev=1e-3,
            weight_decay=0.0,
            activation_fn=tf.nn.relu,
@@ -311,7 +314,7 @@ def conv3d(inputs,
 def fully_connected(inputs,
                     num_outputs,
                     scope,
-                    use_xavier=True,
+                    use_xavier=False,
                     stddev=1e-3,
                     weight_decay=0.0,
                     activation_fn=tf.nn.relu,
