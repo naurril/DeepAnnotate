@@ -5,12 +5,12 @@ import json
 import math
 
 
+KITTI_DATA_ROOT = '/home/lie/disk640/data/kitti/training"
 
-## read kitti labels.
-label_path = '/home/lie/disk640/data/kitti/label_2'
-my_label_path = '/home/lie/disk640/data/kitti/sustechpoints_label'
-calib_path = "/home/lie/disk640/data/kitti/data_object_calib/training/calib"
-pc_path="/home/lie/disk640/data/kitti/velodyne"
+
+label_path = KITTI_DATA_ROOT + '/label_2'
+calib_path = KITTI_DATA_ROOT + "/calib"
+pc_path    = KITTI_DATA_ROOT + "/velodyne"
 
 
 def get_inv_matrix(frame):
