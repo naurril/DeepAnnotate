@@ -5,12 +5,13 @@ import json
 import math
 
 
-KITTI_DATA_ROOT = '/home/lie/disk640/data/kitti/training"
 
+## read kitti labels.
+kitti_root_path = "/home/lie/diskd/data/kitti/3d-obj-det/training"
+label_path = os.path.join(kitti_root_path, 'label_2')
+calib_path = os.path.join(kitti_root_path, 'calib')
+pc_path = os.path.join(kitti_root_path, "velodyne")
 
-label_path = KITTI_DATA_ROOT + '/label_2'
-calib_path = KITTI_DATA_ROOT + "/calib"
-pc_path    = KITTI_DATA_ROOT + "/velodyne"
 
 
 def get_inv_matrix(frame):
@@ -123,10 +124,10 @@ def parse_file(fname):
             #print(trans_pos)
 
             
-            obj_psr = {"scale": {"z":float(words[8]), "x":float(words[9]), "y":float(words[10])},
+            obj_psr = {"scale": {"z":float(words[8]), "x":float(words[10]), "y":float(words[9])},
                             "position": {"x":trans_pos[0], "y":trans_pos[1], "z":trans_pos[2]+float(words[8])/2},
                             #"position": {"x":0, "y":0, "z":0},
-                            "rotation": {"x":0, "y":0, "z":math.pi-float(words[14])}}
+                            "rotation": {"x":0, "y":0, "z":-math.pi/2 -float(words[14])}}
                             #"rotation": {"x":0, "y":0, "z":0}}
             
 
@@ -134,7 +135,7 @@ def parse_file(fname):
             obj["frame"] = os.path.splitext(fname)[0]
             obj["obj_id"] = ""
             obj["obj_type"] = words[0]
-            obj["psr"] = {"scale": {"z":float(words[8]), "x":float(words[9]), "y":float(words[10])},
+            obj["psr"] = {"scale": {"z":float(words[8]), "x":float(words[10]), "y":float(words[9])},
                             "position": {"x":0, "y":0, "z":0},
                             "rotation": {"x":0, "y":0, "z":0}}
             
@@ -142,7 +143,7 @@ def parse_file(fname):
             return obj
  
         objs = map(parse_one_obj, lines)
-        filtered_objs = [x for x in filter(lambda obj: obj["obj_type"]!='DontCare', objs)]
+        filtered_objs = [x for x in objs] #[x for x in filter(lambda obj: obj["obj_type"]!='DontCare', objs)]
         return filtered_objs
 
 all_objs=[]

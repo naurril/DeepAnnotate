@@ -9,6 +9,8 @@ import data_provider
 import common
 import model
 
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0]')
 parser.add_argument('--log_dir', default='log', help='Log dir [default: log]')
@@ -68,7 +70,7 @@ def log_string(out_str):
 
 
 def get_learning_rate(batch):
-    learning_rate = tf.train.exponential_decay(
+    learning_rate = tf.compat.v1.train.exponential_decay(
                         BASE_LEARNING_RATE,  # Base learning rate.
                         batch * BATCH_SIZE,  # Current index into the dataset.
                         DECAY_STEP,          # Decay step.
@@ -78,7 +80,7 @@ def get_learning_rate(batch):
     return learning_rate        
 
 def get_bn_decay(batch):
-    bn_momentum = tf.train.exponential_decay(
+    bn_momentum = tf.compat.v1.train.exponential_decay(
                       BN_INIT_DECAY,
                       batch*BATCH_SIZE,
                       BN_DECAY_DECAY_STEP,
@@ -91,61 +93,61 @@ def train():
     with tf.Graph().as_default():
         with tf.device('/gpu:'+str(GPU_INDEX)):
             pointclouds_pl, labels_pl = model.placeholder_inputs(BATCH_SIZE, NUM_POINT, common.NUM_CLASSES,  regression=use_regression)
-            is_training_pl = tf.placeholder(tf.bool, shape=())
+            is_training_pl = tf.compat.v1.placeholder(tf.bool, shape=())
             print(is_training_pl)
             
             # Note the global_step=batch parameter to minimize. 
             # That tells the optimizer to helpfully increment the 'batch' parameter for you every time it trains.
             batch = tf.Variable(0)
             bn_decay = get_bn_decay(batch)
-            tf.summary.scalar('bn_decay', bn_decay)
+            tf.compat.v1.summary.scalar('bn_decay', bn_decay)
 
             # Get model and loss 
             pred, end_points = model.get_model(pointclouds_pl, is_training_pl, common.NUM_CLASSES, bn_decay=bn_decay, regression=use_regression)
             loss = model.get_loss(pred, labels_pl, end_points, common.CLASS_WEIGHT, reg_weight=0.001, regression=use_regression)
-            tf.summary.scalar('loss', loss)
+            tf.compat.v1.summary.scalar('loss', loss)
             
 
             if use_regression:
-                correct = tf.equal(tf.to_int64(pred*180./np.pi/common.NUM_CLASSES), tf.to_int64(labels_pl*180./np.pi/common.NUM_CLASSES))
-                accuracy = tf.reduce_sum(tf.cast(correct, tf.float32)) / float(BATCH_SIZE)
-                tf.summary.scalar('accuracy', accuracy)  #accuracy of current batch
+                correct = tf.equal(tf.cast(pred*180./np.pi/common.NUM_CLASSES, dtype=tf.int64), tf.cast(labels_pl*180./np.pi/common.NUM_CLASSES, dtype=tf.int64))
+                accuracy = tf.reduce_sum(input_tensor=tf.cast(correct, tf.float32)) / float(BATCH_SIZE)
+                tf.compat.v1.summary.scalar('accuracy', accuracy)  #accuracy of current batch
             else:
-                pred_cls = [x for x in map(lambda p: tf.argmax(p, axis=1), pred)]
+                pred_cls = [x for x in map(lambda p: tf.argmax(input=p, axis=1), pred)]
                 pred_cls = tf.stack(pred_cls, axis=1)  # N*3
-                correct = tf.equal(pred_cls, tf.to_int64(labels_pl))
-                accuracy = tf.reduce_sum(tf.cast(correct, tf.float32), axis=0) / float(BATCH_SIZE)
+                correct = tf.equal(pred_cls, tf.cast(labels_pl, dtype=tf.int64))
+                accuracy = tf.reduce_sum(input_tensor=tf.cast(correct, tf.float32), axis=0) / float(BATCH_SIZE)
                 for i in range(accuracy.shape[0]):
-                    tf.summary.scalar('accuracy_'+str(i), accuracy[i])  #accuracy of current batch
+                    tf.compat.v1.summary.scalar('accuracy_'+str(i), accuracy[i])  #accuracy of current batch
 
             # Get training operator
             learning_rate = get_learning_rate(batch)
-            tf.summary.scalar('learning_rate', learning_rate)
+            tf.compat.v1.summary.scalar('learning_rate', learning_rate)
             if OPTIMIZER == 'momentum':
-                optimizer = tf.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM)
+                optimizer = tf.compat.v1.train.MomentumOptimizer(learning_rate, momentum=MOMENTUM)
             elif OPTIMIZER == 'adam':
-                optimizer = tf.train.AdamOptimizer(learning_rate)
+                optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate)
             train_op = optimizer.minimize(loss, global_step=batch)
             
             # Add ops to save and restore all the variables.
-            saver = tf.train.Saver()
+            saver = tf.compat.v1.train.Saver()
             
         # Create a session
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.allow_soft_placement = True
         config.log_device_placement = False
-        sess = tf.Session(config=config)
+        sess = tf.compat.v1.Session(config=config)
 
         # Add summary writers
         #merged = tf.merge_all_summaries()
-        merged = tf.summary.merge_all()
-        train_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'train'),
+        merged = tf.compat.v1.summary.merge_all()
+        train_writer = tf.compat.v1.summary.FileWriter(os.path.join(LOG_DIR, 'train'),
                                   sess.graph)
-        test_writer = tf.summary.FileWriter(os.path.join(LOG_DIR, 'test'))
+        test_writer = tf.compat.v1.summary.FileWriter(os.path.join(LOG_DIR, 'test'))
 
         # Init variables
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
         # To fix the bug introduced in TF 0.12.1 as in
         # http://stackoverflow.com/questions/41543774/invalidargumenterror-for-tensor-bool-tensorflow-0-12-1
         #sess.run(init)
@@ -176,8 +178,10 @@ def train():
 
 def test_data():
     data = data_provider.loadTrainData()
-    idx = np.random.randint(data.shape[0])
-    
+    #idx = np.random.randint(data.shape[0])
+    num = 10
+    if num > data.shape[0]:
+        num = data.shape[0]
     for i in range(10):        
         obj = data[i]
 
