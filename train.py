@@ -2,7 +2,7 @@ import argparse
 import math
 import h5py
 import numpy as np
-#import tensorflow as tf
+import tensorflow as tf
 import importlib
 import os
 import sys
@@ -10,8 +10,6 @@ import data_provider
 import common
 import model
 
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
 
 
 parser = argparse.ArgumentParser()

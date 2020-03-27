@@ -5,9 +5,9 @@ Date: November 2016
 """
 
 import numpy as np
-#import tensorflow as tf
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+import tensorflow as tf
+#import tensorflow.compat.v1 as tf
+#tf.disable_v2_behavior()
 
 
 def _variable_on_cpu(name, shape, initializer, use_fp16=False):
