@@ -9,21 +9,21 @@ import tf_util
 from transform_nets import input_transform_net, feature_transform_net
 
 def placeholder_inputs(batch_size, num_point, num_classes, regression=False):
-    pointclouds_pl = tf.placeholder(tf.float32, shape=(batch_size, num_point, 3))  # suffix `pl` means placeholder.
+    pointclouds_pl = tf.compat.v1.placeholder(tf.float32, shape=(batch_size, num_point, 3))  # suffix `pl` means placeholder.
     if regression:
-        labels_pl = tf.placeholder(tf.float32, shape=(batch_size))
+        labels_pl = tf.compat.v1.placeholder(tf.float32, shape=(batch_size))
     else:
-        labels_pl =tf.placeholder(tf.int32, shape=(batch_size, len(num_classes)))
+        labels_pl =tf.compat.v1.placeholder(tf.int32, shape=(batch_size, len(num_classes)))
     return pointclouds_pl, labels_pl
 
 
 def get_model(point_cloud, is_training, num_classes, bn_decay=None, regression=False):
     """ Classification PointNet, input is BxNx3, output Bx40 """
-    batch_size = point_cloud.get_shape()[0].value
-    num_point = point_cloud.get_shape()[1].value
+    batch_size = point_cloud.get_shape()[0]
+    num_point = point_cloud.get_shape()[1]
     end_points = {}
 
-    with tf.variable_scope('transform_net1') as sc:
+    with tf.compat.v1.variable_scope('transform_net1') as sc:
         transform = input_transform_net(point_cloud, is_training, bn_decay, K=3)
     point_cloud_transformed = tf.matmul(point_cloud, transform)
     input_image = tf.expand_dims(point_cloud_transformed, -1)
@@ -37,7 +37,7 @@ def get_model(point_cloud, is_training, num_classes, bn_decay=None, regression=F
                          bn=True, is_training=is_training,
                          scope='conv2', bn_decay=bn_decay)
 
-    with tf.variable_scope('transform_net2') as sc:
+    with tf.compat.v1.variable_scope('transform_net2') as sc:
         transform = feature_transform_net(net, is_training, bn_decay, K=64)
     end_points['transform'] = transform
     net_transformed = tf.matmul(tf.squeeze(net, axis=[2]), transform)
@@ -102,11 +102,11 @@ def get_loss(pred, label, end_points, class_weight, reg_weight=0.001, regression
 
     # Enforce the transformation as orthogonal matrix
     transform = end_points['transform'] # BxKxK
-    K = transform.get_shape()[1].value
-    mat_diff = tf.matmul(transform, tf.transpose(transform, perm=[0,2,1]))
+    K = transform.get_shape()[1]
+    mat_diff = tf.matmul(transform, tf.transpose(a=transform, perm=[0,2,1]))
     mat_diff -= tf.constant(np.eye(K), dtype=tf.float32)
     mat_diff_loss = tf.nn.l2_loss(mat_diff) 
-    tf.summary.scalar('mat loss', mat_diff_loss)
+    tf.compat.v1.summary.scalar('mat loss', mat_diff_loss)
 
     total_loss  =  mat_diff_loss * reg_weight
 
@@ -115,14 +115,14 @@ def get_loss(pred, label, end_points, class_weight, reg_weight=0.001, regression
         #pred = tf.min([pred, tf.math.pi*2])
         pred = tf.squeeze(pred)
         loss = tf.math.squared_difference(pred, label)
-        this_loss = tf.reduce_mean(loss)
-        tf.summary.scalar('classify loss', this_loss)
+        this_loss = tf.reduce_mean(input_tensor=loss)
+        tf.compat.v1.summary.scalar('classify loss', this_loss)
         total_loss += this_loss
     else:
         for i in range(len(pred)):
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=pred[i], labels=label[:,i])
-            this_loss = tf.reduce_mean(loss) * class_weight[i]
-            tf.summary.scalar('classify loss '+str(i), this_loss)
+            this_loss = tf.reduce_mean(input_tensor=loss) * class_weight[i]
+            tf.compat.v1.summary.scalar('classify loss '+str(i), this_loss)
             total_loss += this_loss
     
     return total_loss
