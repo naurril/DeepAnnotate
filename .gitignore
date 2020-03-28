@@ -4,7 +4,9 @@ __pycache__/
 *$py.class
 
 all_objs.npy
-
+logs/
+models/
+*.h5
 log/
 
 # C extensions
