@@ -8,37 +8,32 @@ import common
 import model as M
 import dataset as D
 import os
+import util
 
-print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+util.config_gpu()
+#print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
-def get_train_dataset():
-    data = data_provider.loadTrainData()
-    return D.get_dataset(data)
-
-def get_eval_dataset():
-    data = data_provider.loadEvalData()
-    return D.get_dataset(data)
 
 # def get_debug_data():
 #     return tf.data.Dataset.from_tensor_slices((np.zeros([32*381,512,3]), np.zeros([32*381,1])))
+
 
 def train():
 
     if os.path.exists("deepannotate.h5"):
         model = tf.keras.models.load_model("deepannotate.h5")
     else:
-        model = M.get_model_tf2(common.NUM_POINT, common.NUM_CLASSES[2], True)
-        
+        model = M.get_model_cls(common.NUM_POINT, common.NUM_CLASSES[2], True)
         model.compile(optimizer=tf.keras.optimizers.Adam(0.0001), 
                     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-                    metrics=["sparse_categorical_accuracy"])
+                    metrics=[tf.keras.metrics.sparse_categorical_accuracy, tf.keras.metrics.SparseTopKCategoricalAccuracy(k=2)])
     model.summary()
     
-    input_data = get_train_dataset()
+    input_data = D.get_cls_train_dataset()
     #input_data = input_data.shuffle(buffer_size=32*382)
     input_data = input_data.batch(32)
 
-    eval_data = get_eval_dataset()
+    eval_data = D.get_cls_eval_dataset()
     eval_data = eval_data.batch(32)
     
     log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -55,7 +50,6 @@ def train():
             return 0.00005
         else: 
             return 0.00001
-
         #return max(0.001 * (0.7 ** (epoch / 10)), 0.00001)
 
     lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_scheduler,verbose=1)
@@ -64,12 +58,14 @@ def train():
         def on_epoch_end(self, epoch, logs=None):
             if epoch % 5 == 0:
                 self.model.save("deepannotate.h5", include_optimizer=True, overwrite=True)
+                model.save_weights("da_weights.h5")
                 print("model saved!")
 
 
     model.fit(input_data, validation_data=eval_data , epochs=250, callbacks=[tensorboard_callback, lr_callback, SaveCallback()])
 
     model.save("deepannotate.h5", include_optimizer=True, overwrite=True)
+    model.save_weights("da_weights.h5")
 
 
 if __name__ == "__main__":

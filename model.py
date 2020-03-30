@@ -36,10 +36,7 @@ def transform_net(input, is_training):
     
     return x
 
-
-
-def get_model_tf2(num_point, num_classes, is_training):
-    input_pointcloud = tf.keras.Input(shape=(num_point, 3)) # batch_size is optional
+def get_backbone(input_pointcloud, num_point, is_training):
     x = tf.expand_dims(input_pointcloud, -1)
 
     trans = transform_net(x, is_training)
@@ -69,6 +66,32 @@ def get_model_tf2(num_point, num_classes, is_training):
     x = fc(x, 256, is_training)
     x = tf.keras.layers.Dropout(0.3)(x, is_training)
 
+    return x
+
+def get_model_cls(num_point, num_classes, is_training):
+    input_pointcloud = tf.keras.Input(shape=(num_point, 3)) # batch_size is optional
+    x = get_backbone(input_pointcloud, num_point, is_training)
     x = tf.keras.layers.Dense(num_classes)(x)
+    model = tf.keras.Model(inputs=input_pointcloud, outputs=x)
+    return model
+
+
+def get_model_reg(num_point, num_reg_target, is_training):
+    input_pointcloud = tf.keras.Input(shape=(num_point, 3)) # batch_size is optional
+    x = get_backbone(input_pointcloud, num_point, is_training)
+    
+    x = fc(x, 64, is_training)
+    x = tf.keras.layers.Dropout(0.3)(x, is_training)
+
+    x = fc(x, 16, is_training)
+    x = tf.keras.layers.Dropout(0.3)(x, is_training)
+
+
+    x = tf.keras.layers.Dense(num_reg_target)(x)
+
+    s = tf.math.sqrt(tf.math.reduce_sum(x*x, axis=-1))
+    s = tf.expand_dims(s, -1)
+    x = tf.divide(x, s)
+
     model = tf.keras.Model(inputs=input_pointcloud, outputs=x)
     return model

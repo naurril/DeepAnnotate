@@ -20,8 +20,10 @@ def class_to_angle(cls):
     return cls * CLASS_GAP + CLASS_LOWEST_RAD
 
 
-def rotate_one_obj(points):
-    rotation = (np.random.uniform(size=3) + CLASS_LOWEST_RAD/CLASS_COVERED_RAD) * CLASS_COVERED_RAD
+def rotate_one_obj(points, rotation=None):
+
+    if not rotation:
+        rotation = (np.random.uniform(size=3) + CLASS_LOWEST_RAD/CLASS_COVERED_RAD) * CLASS_COVERED_RAD
     #print(angle_z, angle_y, angle_x)
     #angle_z, angle_y, angle_x = [0, 0, np.pi/6]
     # we rotate only yaw angle
@@ -52,22 +54,27 @@ def rotate_one_obj(points):
     
     return np.dot(points, rotation_matrix), rotation
 
-def sample_one_input_data(obj, num_points, rotate=True, translate=True, crop=True):
+
+def crop_out_bottom(points, threshold=0.3):
+    min_z = np.min(points[:,2])
+    condition = (points[:, 2] - min_z) > threshold
+    points = points[condition]
+    return points
+
+def sample_one_input_data(obj, num_points, rotate=True, rotate_value=None, translate=True, crop=True):
     points = obj["points"]
-    label_rotation = [obj["rotation"]["x"], obj["rotation"]["y"], obj["rotation"]["z"]]
+    label_rotation = np.array([obj["rotation"]["x"], obj["rotation"]["y"], obj["rotation"]["z"]])
 
     # 1 rotate
     if rotate:
-        points, rotation = rotate_one_obj(points)
+        points, rotation = rotate_one_obj(points, rotate_value)
         #points = provider.jitter_point_cloud(points)
-        label_rotation += rotation
+        label_rotation = rotation + label_rotation
     
 
     if True:
         # 1.1 crop out bottom part
-        min_z = np.min(points[:,2])
-        condition = (points[:, 2] - min_z) > 0.3
-        points = points[condition]
+        points = crop_out_bottom(points, 0.3)
 
 
     # 2 translate
@@ -112,12 +119,13 @@ def sample_one_input_data(obj, num_points, rotate=True, translate=True, crop=Tru
         }
 
 
+viewer_path = "/home/lie/src/SUSTechPoints/data/kitti_eval"
 
 def save_to_show(name, points, anno):    
     padding = np.zeros([points.shape[0], 1], dtype=np.float32)   # pad to N*4
     points = np.concatenate([points, padding], axis=-1)
-    points.tofile("/home/lie/fast/code/SUSTechPoints/data/kitti_eval/pcd/"+name+".bin")
+    points.tofile(viewer_path + "/pcd/"+name+".bin")
     #print(points.dtype)
     
-    with open("/home/lie/fast/code/SUSTechPoints/data/kitti_eval/label/"+name+".json", 'w') as outfile:
+    with open(viewer_path + "/label/"+name+".json", 'w') as outfile:
                 json.dump(anno, outfile)

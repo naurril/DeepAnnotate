@@ -3,15 +3,17 @@
 import numpy as np
 import tensorflow as tf
 import common
+import util
+import model as M
 
+util.config_gpu()
 
-RESAMPLE_NUM = 5
+RESAMPLE_NUM = 20
 
-model_path = "deepannotate.h5"
-model = tf.keras.models.load_model(model_path)
+weights_path = "../DeepAnnotate/models/da_weights.h5"
+model = M.get_model_tf2(common.NUM_POINT, common.NUM_CLASSES[2], False)
+model.load_weights(weights_path)
 model.summary()
-
-
 
 
 def sample_one_obj(points, num):
@@ -25,14 +27,7 @@ def sample_one_obj(points, num):
 def predict(points):
     points = np.array(points).reshape((-1,3))
     input_data = np.stack([x for x in map(lambda x: sample_one_obj(points, common.NUM_POINT), range(RESAMPLE_NUM))], axis=0)
-    
-    print(points.shape)
-    print(input_data.shape)
-
     pred_val = model.predict(input_data)
-
-    #pred_val 5*120, 5*20, 5*20
-
     pred_cls = np.argmax(pred_val, axis=-1)
     print(pred_cls)
     ret = common.class_to_angle(pred_cls[0])
