@@ -10,13 +10,12 @@ import dataset as D
 import os
 import util
 
+
 util.config_gpu()
 
 
 model_file = "deepannotate_reg.h5"
 weights_file = "da_weights_reg.h5"
-
-
 
 
 def train():

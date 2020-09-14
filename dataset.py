@@ -57,30 +57,6 @@ def get_cls_dataset_x(data):
     return input_data
 
 
-def get_reg_dataset(data):
-    "regression of angle, with cos/sin values"
-    #point_clouds = [x for x in map(lambda o: o["points"], data)]
-    index_data = tf.data.Dataset.from_tensor_slices([x for x in range(len(data))])
-    index_data = index_data.shuffle(buffer_size=len(data))
-
-    def sample(idx):
-        sample = common.sample_one_input_data(data[idx], common.NUM_POINT)
-        ang = sample["angle"][2] # z angle
-
-        angle_reg = [np.cos(ang), np.sin(ang)]
-        z_angle = angle_class[2:]
-
-        return sample["points"], z_angle #only z angle, IMPORTANT: don't use scalar value
-
-    def tf_rotate_object(obj_idx):
-        [points, angle] = tf.py_function(sample, [obj_idx], [tf.float32, tf.float32])
-        points.set_shape((common.NUM_POINT, 3))
-        angle.set_shape((1))
-        return points, angle
-
-    input_data = index_data.map(tf_rotate_object)
-    return input_data
-
 
 
 # classifcation dataset
@@ -114,7 +90,7 @@ def tf_angle_to_reg(points, angle):
 def get_reg_train_dataset():
     data = data_provider.loadTrainData()
     data = get_dataset(data)    
-    data = data.map(tf_angle_to_reg)
+    #data = data.map(tf_angle_to_reg)
     return data
 
 def get_reg_eval_dataset():

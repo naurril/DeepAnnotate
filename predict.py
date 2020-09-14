@@ -11,7 +11,7 @@ util.config_gpu()
 RESAMPLE_NUM = 20
 
 weights_path = "../DeepAnnotate/models/da_weights.h5"
-model = M.get_model_tf2(common.NUM_POINT, common.NUM_CLASSES[2], False)
+model = M.get_model_cls(common.NUM_POINT, common.NUM_CLASSES[2], False)
 model.load_weights(weights_path)
 model.summary()
 

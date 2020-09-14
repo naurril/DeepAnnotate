@@ -119,7 +119,7 @@ def sample_one_input_data(obj, num_points, rotate=True, rotate_value=None, trans
         }
 
 
-viewer_path = "/home/lie/src/SUSTechPoints/data/kitti_eval"
+viewer_path = "../SUSTechPOINTS/data/kitti_eval"
 
 def save_to_show(name, points, anno):    
     padding = np.zeros([points.shape[0], 1], dtype=np.float32)   # pad to N*4
