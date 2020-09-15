@@ -41,3 +41,28 @@ def loadEvalData():
                                                "obj_id": o["obj_id"]
                                                }, valid_objs[train_obj_num:])])
 
+
+
+###
+
+rp_all_objs = np.load("sustechscape_all_objs.npy", allow_pickle=True)
+
+## all positive objs
+
+MIN_POINTS = 32
+positive_objs = [x for x in filter(lambda o: o['obj_type'] != 'none'  and o["points"].shape[0]>MIN_POINTS, rp_all_objs)]*7
+negative_objs = [x for x in filter(lambda o: o['obj_type'] == 'none'  and o["points"].shape[0]>MIN_POINTS, rp_all_objs)]
+
+all_train_objs = shuffle_data(np.array(positive_objs + negative_objs))
+
+rp_split = all_train_objs.shape[0]*7//10
+print(rp_split)
+#positive_objs = shuffle_data(positive_objs)
+#negative_objs = shuffle_data(negative_objs)
+#negative_objs = negative_objs[0:positive_objs.shape[0]]
+
+
+def load_rp_train_data():
+    return all_train_objs[0:rp_split]
+def load_rp_val_data():
+    return all_train_objs[rp_split:]

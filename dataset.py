@@ -37,6 +37,24 @@ def get_dataset(data):
     input_data = index_data.map(tf_rotate_object)
     return input_data
 
+def get_rp_dataset(data):
+    #point_clouds = [x for x in map(lambda o: o["points"], data)]
+    index_data = tf.data.Dataset.from_tensor_slices([x for x in range(len(data))])
+    index_data = index_data.shuffle(buffer_size=len(data))
+
+    def sample(idx):
+        sample = common.sample_one_rp_data(data[idx], common.NUM_POINT)
+        return sample["points"], sample["clz"]
+
+    def tf_rotate_object(obj_idx):
+        [points, clz] = tf.py_function(sample, [obj_idx], [tf.float32, tf.int64])
+        points.set_shape((common.NUM_POINT, 3))
+        clz.set_shape((1,))
+        return points, clz
+
+    input_data = index_data.map(tf_rotate_object)
+    return input_data
+
 
 def get_cls_dataset_x(data):  
     "get tf.dataset without label"
@@ -79,7 +97,16 @@ def get_cls_eval_dataset():
     data = data.map(tf_angle_to_cls)
     return data
 
+def get_rp_train_dataset():
+    data = data_provider.load_rp_train_data()
+    data = get_rp_dataset(data)
+    return data
 
+def get_rp_val_dataset():
+    data = data_provider.load_rp_val_data()
+    data = get_rp_dataset(data)
+    return data
+    
 # regression dataset
 
 def tf_angle_to_reg(points, angle):

@@ -76,6 +76,14 @@ def get_model_cls(num_point, num_classes, is_training):
     return model
 
 
+def get_model_rp_discrimination(num_point, num_classes, is_training):
+    input_pointcloud = tf.keras.Input(shape=(num_point, 3)) # batch_size is optional
+    x = get_backbone(input_pointcloud, num_point, is_training)
+    x = tf.keras.layers.Dense(num_classes)(x)
+    model = tf.keras.Model(inputs=input_pointcloud, outputs=x)
+    return model
+
+
 def get_model_reg(num_point, num_reg_target, is_training):
     input_pointcloud = tf.keras.Input(shape=(num_point, 3)) # batch_size is optional
     x = get_backbone(input_pointcloud, num_point, is_training)

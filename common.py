@@ -61,7 +61,7 @@ def crop_out_bottom(points, threshold=0.3):
     points = points[condition]
     return points
 
-def sample_one_input_data(obj, num_points, rotate=True, rotate_value=None, translate=True, crop=True):
+def sample_one_input_data(obj, num_points, rotate=True, rotate_value=None, translate=True, crop=True, cut_bottom=True):
     points = obj["points"]
     label_rotation = np.array([obj["rotation"]["x"], obj["rotation"]["y"], obj["rotation"]["z"]])
 
@@ -72,7 +72,7 @@ def sample_one_input_data(obj, num_points, rotate=True, rotate_value=None, trans
         label_rotation = rotation + label_rotation
     
 
-    if True:
+    if cut_bottom:
         # 1.1 crop out bottom part
         points = crop_out_bottom(points, 0.3)
 
@@ -117,6 +117,51 @@ def sample_one_input_data(obj, num_points, rotate=True, rotate_value=None, trans
         "angle": label_rotation.tolist(),
         "translate": translate.tolist()
         }
+
+
+
+
+def sample_one_rp_data(obj, num_points, rotate=True, rotate_value=None, translate=True, crop=True):
+    points = obj["points"][:,:3] #don't use intensity
+    
+    #centroid = np.mean(points, axis=0)
+    # centroid[3] = 0.0  #intensity, keep original value?
+
+    #points = points - centroid
+
+    # 1 rotate
+    if rotate:
+        points, rotation = rotate_one_obj(points, rotate_value)
+        #points = provider.jitter_point_cloud(points)
+        #label_rotation = rotation + label_rotation
+    
+    #points = points + centroid
+
+    #print("points shape", points.shape)
+    # 4 sample or padding
+    # print(points.shape)
+    if points.shape[0]>num_points:
+        idx = np.arange(points.shape[0])
+        np.random.shuffle(idx)
+        points =  points[idx[0:num_points]]
+    else:
+        sample_idx = np.random.randint(0, high = points.shape[0], size=num_points - points.shape[0])
+        padding = points[sample_idx]
+        points = np.concatenate([points, padding], axis=0)
+
+    # jitter
+
+    # center again
+
+    # normalize
+
+    clz = 1 if obj["obj_type"] != 'none' else 0
+    # return
+    return {
+        "points": points, 
+        "clz": [clz]
+        }
+
 
 
 viewer_path = "../SUSTechPOINTS/data/kitti_eval"
